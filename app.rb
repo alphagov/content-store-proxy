@@ -1,7 +1,6 @@
 
 require 'sinatra'
 require 'sinatra/multi_route'
-require 'byebug'
 
 require './lib/request_forwarder'
 require './lib/response_comparator'

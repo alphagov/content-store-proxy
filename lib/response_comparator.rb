@@ -20,11 +20,11 @@ private
   
   def self.first_difference(string1, string2)
     i = 0
-    while string1[i] == string2[i] do
+    while string1[i] == string2[i] && i < string1.size do
       i = i+1
     end
   
-    if i < string1.size
+    if i < string1.size || i < string2.size
       {position: i, context: [string1[i-5..i+5], string2[i-5..i+5]]}
     else
       {}
