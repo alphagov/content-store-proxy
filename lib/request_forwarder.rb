@@ -4,10 +4,14 @@ class RequestForwarder
 
   def self.mirror_to(primary_upstream, secondary_upstream, incoming_request)
     # forward to primary upstream
-    primary_response = forward_to(ENV['PRIMARY_UPSTREAM'], incoming_request)
+    primary_thread = Thread.new { forward_to(ENV['PRIMARY_UPSTREAM'], incoming_request) }
     # forward to secondary upstream
-    secondary_response = forward_to(ENV['SECONDARY_UPSTREAM'], incoming_request)
+    secondary_thread = Thread.new { forward_to(ENV['SECONDARY_UPSTREAM'], incoming_request) }
 
+    primary_thread.join
+    secondary_thread.join
+    primary_response = primary_thread.value
+    secondary_response = secondary_thread.value 
     [primary_response, secondary_response]
   end
 
