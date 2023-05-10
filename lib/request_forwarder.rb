@@ -48,6 +48,9 @@ private
   def self.send_to(connection, incoming_request)
     connection.send(incoming_request.request_method.downcase, incoming_request.path) do |req|
       req.headers = headers_from(incoming_request)
+      # We must delete Host header, otherwise the upstream request
+      # will return a 503
+      req.headers.delete("Host")
       req.params = incoming_request.params
       req.body = incoming_request.body.dup
 
