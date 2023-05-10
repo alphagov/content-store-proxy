@@ -95,4 +95,9 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
+
+  require 'rack/test'
+  config.include Rack::Test::Methods
+  require 'simplecov'
+  SimpleCov.start
 end
