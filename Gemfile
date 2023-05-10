@@ -10,5 +10,6 @@ group :development, :test do
   gem 'rack-test', '>= 1.1.0'
   gem 'byebug'
   gem 'rspec', '>= 3.10.0'
+  gem 'simplecov'
   gem 'webmock', '>= 3.14.1'
 end
