@@ -12,7 +12,8 @@ class ContentStoreProxyApp < Sinatra::Base
     @primary = primary_upstream || ENV["PRIMARY_UPSTREAM"]
     @secondary = secondary_upstream || ENV["SECONDARY_UPSTREAM"]
 
-    raise "You must provide both PRIMARY_UPSTREAM and SECONDARY_UPSTREAM URLs" if @primary.nil? || @secondary.nil?  
+    raise "You must provide both PRIMARY_UPSTREAM and SECONDARY_UPSTREAM URLs" if @primary.nil? || @secondary.nil? 
+    super 
   end
 
   def forward_request(request)
