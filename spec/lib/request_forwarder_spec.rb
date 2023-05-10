@@ -170,13 +170,12 @@ RSpec.describe RequestForwarder do
 
       let(:returned_value) { described_class.headers_from(incoming_request) }
 
-      it "includes only the env vars where the key starts with HTTP_" do
-        expect(returned_value.keys.size).to eq(2)
+      it "includes only the env vars where the key starts with HTTP_, and it is not HTTP_HOST" do
+        expect(returned_value.keys.size).to eq(1)
       end
       
-      it "transforms the key to capital case and strips off the leading HTTP_" do
+      it "transforms the keys to capital case and strips off the leading HTTP_" do
         expect(returned_value).to eq({
-          "Host" => "my.host",
           "Transfer-Encoding" => "chunked",
         })
       end
