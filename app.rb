@@ -1,12 +1,22 @@
 
 require 'sinatra/base'
 require 'sinatra/multi_route'
+require 'sinatra/custom_logger'
+require 'logger'
 
 require './lib/request_forwarder'
 require './lib/response_comparator'
 
 class ContentStoreProxyApp < Sinatra::Base
   register Sinatra::MultiRoute
+  helpers Sinatra::CustomLogger
+
+  configure :development, :production do
+    logger = Logger.new(STDOUT)
+    logger.level = Logger::DEBUG #if development?
+    set :logger, logger
+  end
+
   
   def initialize( primary_upstream: nil, secondary_upstream: nil)
     @primary = primary_upstream || ENV["PRIMARY_UPSTREAM"]
