@@ -5,6 +5,7 @@ gem 'rack'
 gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'logger'
+gem 'webrick'
 
 group :development, :test do
   gem 'rack-test', '>= 1.1.0'
