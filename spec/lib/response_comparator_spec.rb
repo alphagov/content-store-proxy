@@ -1,25 +1,26 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 require "response_comparator"
 
 RSpec.describe ResponseComparator do
   describe ".response_stats" do
-    context "given a response" do
+    context "when given a response" do
       let(:response) do
-        double(
-          {
-            status: 418,
-            body: "a 16-char string",
-            headers: {
-              "X-Response-Time" => 123.456,
-              "Content-type" => "text/plain",
-            }
-          }
-        )
+        instance_double(Faraday::Response,
+                        {
+                          status: 418,
+                          body: "a 16-char string",
+                          headers: {
+                            "X-Response-Time" => 123.456,
+                            "Content-type" => "text/plain",
+                          },
+                        })
       end
-        
+
       describe "the returned value" do
         let(:result) { described_class.response_stats(response) }
-        
+
         it "is a Hash" do
           expect(result).to be_a(Hash)
         end
@@ -31,7 +32,7 @@ RSpec.describe ResponseComparator do
         it "has :body_size set to the length of the response body" do
           expect(result[:body_size]).to eq(16)
         end
-        
+
         it "has :time set to the X-Response-Time header from the response" do
           expect(result[:time]).to eq(123.456)
         end
@@ -40,11 +41,11 @@ RSpec.describe ResponseComparator do
   end
 
   describe ".first_difference" do
-    context "given two strings" do
+    context "when given two strings" do
       let(:string1) { "a string of length 20" }
       let(:return_value) { described_class.first_difference(string1, string2) }
 
-      context "that are both the same" do
+      context "with the same value" do
         let(:string2) { string1.dup }
 
         it "returns {}" do
@@ -52,7 +53,7 @@ RSpec.describe ResponseComparator do
         end
       end
 
-      context "that have a difference" do
+      context "with a difference" do
         let(:string2) { "a different string" }
 
         describe "the return value" do
@@ -61,32 +62,32 @@ RSpec.describe ResponseComparator do
           end
         end
 
-        context "more than 5 characters from the start and more than 5 characters from the end" do
+        context "and the difference is more than 5 characters from the start and more than 5 characters from the end" do
           let(:string2) { "a string!of length 20" }
 
           describe "the return value" do
             it "has :context set to the 5 characters either side of the first difference, from each string" do
-              expect(return_value[:context]).to eq( ["tring of le", "tring!of le"] )
+              expect(return_value[:context]).to eq(["tring of le", "tring!of le"])
             end
           end
         end
 
-        context "more than 5 characters from the start and less than 5 characters from the end" do
+        context "and the difference is more than 5 characters from the start and less than 5 characters from the end" do
           let(:string2) { "a string of length!20" }
 
           describe "the return value" do
             it "has :context set to the 5 characters before the first difference, and only up to the end of each string" do
-              expect(return_value[:context]).to eq( ["ength 20", "ength!20"] )
+              expect(return_value[:context]).to eq(["ength 20", "ength!20"])
             end
           end
         end
 
-        context "less than 5 characters from the start and more than 5 characters from the end" do
+        context "and the difference is less than 5 characters from the start and more than 5 characters from the end" do
           let(:string2) { "a string of length!20" }
 
           describe "the return value" do
             it "has :context set to the available characters before the first difference, and the 5 characters after each string" do
-              expect(return_value[:context]).to eq( ["ength 20", "ength!20"] )
+              expect(return_value[:context]).to eq(["ength 20", "ength!20"])
             end
           end
         end
@@ -95,20 +96,21 @@ RSpec.describe ResponseComparator do
   end
 
   describe ".compare" do
-    context "given a primary_response and a secondary_response" do
+    context "when given a primary_response and a secondary_response" do
       let(:primary_response) do
-        double({
+        instance_double(Faraday::Response, {
           body: "primary response body",
         })
       end
       let(:secondary_response) do
-        double({
+        instance_double(Faraday::Response, {
           body: "secondary response body",
         })
       end
 
       describe "the return value" do
         let(:return_value) { described_class.compare(primary_response, secondary_response) }
+
         before do
           allow(described_class).to receive(:response_stats).with(primary_response).and_return("mock primary response stats")
           allow(described_class).to receive(:response_stats).with(secondary_response).and_return("mock secondary response stats")
@@ -140,5 +142,4 @@ RSpec.describe ResponseComparator do
       end
     end
   end
-
 end

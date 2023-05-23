@@ -1,16 +1,22 @@
-source 'https://rubygems.org'
+# frozen_string_literal: true
 
-gem 'faraday', '>= 1.5.1'
-gem 'rack'
-gem 'sinatra'
-gem 'sinatra-contrib'
-gem 'logger'
-gem 'webrick'
+source "https://rubygems.org"
+
+gem "faraday", ">= 1.5.1"
+gem "logger"
+gem "rack"
+gem "rake"
+gem "sinatra"
+gem "sinatra-contrib"
+gem "webrick"
 
 group :development, :test do
-  gem 'rack-test', '>= 1.1.0'
-  gem 'byebug'
-  gem 'rspec', '>= 3.10.0'
-  gem 'simplecov'
-  gem 'webmock', '>= 3.14.1'
+  gem "byebug"
+  gem "rack-test", ">= 1.1.0"
+  gem "rspec", ">= 3.10.0"
+  gem "rubocop-govuk"
+  gem "rubocop-rake"
+  gem "rubocop-rspec"
+  gem "simplecov"
+  gem "webmock", ">= 3.14.1"
 end
