@@ -1,0 +1,35 @@
+name: Run RSpec
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to checkout'
+        required: false
+        type: string
+      publishingApiRef:
+        description: 'The branch, tag or SHA to checkout Publishing API'
+        required: false
+        default: 'main'
+        type: string
+
+jobs:
+  run-rspec:
+    name: Run RSpec
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          repository: alphagov/content-store-proxy
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Run RSpec
+        env:
+          APP_ENV: test
+        run: bundle exec rake spec
