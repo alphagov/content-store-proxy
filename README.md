@@ -17,9 +17,9 @@ Any errors on the secondary response are ignored and do not interfere with the p
 
 # To run
 
-On your local host, run:
+On your *local host*, run:
 
-````
+```
 PRIMARY_UPSTREAM=http://content-store.dev.gov.uk SECONDARY_UPSTREAM=http://content-store-on-postgresql.dev.gov.uk bundle exec rackup config.rb -p4567 
 ```
 
