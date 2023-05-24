@@ -64,11 +64,33 @@ RSpec.describe "Forwarding service" do
         expect(last_response.body).to eq(primary_response_body)
       end
     end
+
+    context "when the request has headers" do
+      let(:headers) { { "HTTP_X_ARBITRARY_HEADER" => "X-A-H header value", "HTTP_ACCEPT" => "application/json" } }
+
+      it "translates the given headers and passes them correctly to the primary upstream service" do
+        get "/foo", {}, headers
+
+        expect(WebMock).to have_requested(:get, primary_url)
+          .with(
+            headers: { "Accept" => "application/json", "X-Arbitrary-Header" => "X-A-H header value" },
+          )
+      end
+
+      it "translates the given headers and passes them correctly to the secondary upstream service" do
+        get "/foo", {}, headers
+
+        expect(WebMock).to have_requested(:get, secondary_url)
+          .with(
+            headers: { "Accept" => "application/json", "X-Arbitrary-Header" => "X-A-H header value" },
+          )
+      end
+    end
   end
 
   describe "POST requests" do
     let(:body) { { field1: "value 1", field2: "value 2" }.to_json }
-    let(:headers) { { 'X-Arbitrary-Header': "X-A-H header value", 'ACCEPT': "application/json" } }
+    let(:headers) { { "HTTP_X_ARBITRARY_HEADER" => "X-A-H header value", "HTTP_ACCEPT" => "application/json" } }
 
     before do
       stub_request(:post, primary_url).to_return(status: primary_response_status, body: primary_response_body)
@@ -84,6 +106,16 @@ RSpec.describe "Forwarding service" do
         )
     end
 
+    it "translates the given headers and passes them correctly to the primary upstream service" do
+      post "/foo", body, headers
+
+      expect(WebMock).to have_requested(:post, primary_url)
+        .with(
+          body:,
+          headers: { "Accept" => "application/json", "X-Arbitrary-Header" => "X-A-H header value" },
+        )
+    end
+
     it "forwards the request with the given body to the secondary upstream service" do
       post "/foo", body, headers
 
@@ -91,6 +123,16 @@ RSpec.describe "Forwarding service" do
         .with(
           body:,
         )).to have_been_made
+    end
+
+    it "translates the given headers and passes them correctly to the secondary upstream service" do
+      post "/foo", body, headers
+
+      expect(WebMock).to have_requested(:post, secondary_url)
+        .with(
+          body:,
+          headers: { "Accept" => "application/json", "X-Arbitrary-Header" => "X-A-H header value" },
+        )
     end
 
     context "when the primary returns an error" do
