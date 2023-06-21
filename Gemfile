@@ -2,6 +2,7 @@
 
 source "https://rubygems.org"
 
+gem "bootsnap", require: false
 gem "faraday", ">= 1.5.1"
 gem "logger"
 gem "rack"
