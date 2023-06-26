@@ -4,7 +4,9 @@ source "https://rubygems.org"
 
 gem "bootsnap", require: false
 gem "faraday", ">= 1.5.1"
+gem "govuk_app_config"
 gem "logger"
+gem "puma"
 gem "rack"
 gem "rake"
 gem "sinatra"
