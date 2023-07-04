@@ -33,7 +33,7 @@ class ContentStoreProxyApp < Sinatra::Base
     # log comparison of the two responses
     comparison = ResponseComparator.compare(primary_response, secondary_response)
     method = comparison[:first_difference].empty? ? :info : :warn
-    logger.send(method, "path: #{request.path}, stats: #{comparison}")
+    logger.send(method, { path: request.path, stats: comparison }.to_json)
 
     [primary_response.status, primary_response.headers, primary_response.body]
   end
