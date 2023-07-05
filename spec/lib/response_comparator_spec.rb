@@ -95,6 +95,30 @@ RSpec.describe ResponseComparator do
     end
   end
 
+  describe ".different_keys" do
+    context "when given two strings that are both JSON" do
+      let(:string1) { { a: "a", b: "b", c: %w[c1 c2] }.to_json }
+      let(:string2) { { a: "a", b: "different b", c: ["c1", "different c2"] }.to_json }
+
+      it "returns an array of the keys with different values" do
+        expect(described_class.different_keys(string1, string2)).to eq(%w[b c])
+      end
+    end
+
+    context "when given two strings that are not both JSON" do
+      let(:string1) { "not json" }
+      let(:string2) { "not json either" }
+
+      it "does not error" do
+        expect { described_class.different_keys(string1, string2) }.not_to raise_error
+      end
+
+      it "returns N/A" do
+        expect(described_class.different_keys(string1, string2)).to eq("N/A")
+      end
+    end
+  end
+
   describe ".compare" do
     context "when given a primary_response and a secondary_response" do
       let(:primary_response) do
@@ -137,6 +161,18 @@ RSpec.describe ResponseComparator do
 
           it "is set to the response_stats for the secondary_response" do
             expect(secondary_response_key).to eq("mock secondary response stats")
+          end
+        end
+
+        describe "the different_keys key" do
+          let(:different_keys) { %w[key1 key2] }
+
+          before do
+            allow(described_class).to receive(:different_keys).and_return(different_keys)
+          end
+
+          it "is set to the return value of different_keys" do
+            expect(return_value[:different_keys]).to eq(different_keys)
           end
         end
       end

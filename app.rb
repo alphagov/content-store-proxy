@@ -31,7 +31,9 @@ class ContentStoreProxyApp < Sinatra::Base
     primary_response, secondary_response = RequestForwarder.mirror_to(@primary, @secondary, request)
 
     # log comparison of the two responses
-    logger.info("stats: #{ResponseComparator.compare(primary_response, secondary_response)}")
+    comparison = ResponseComparator.compare(primary_response, secondary_response)
+    method = comparison[:first_difference].empty? ? :info : :warn
+    logger.send(method, { path: request.path, stats: comparison }.to_json)
 
     [primary_response.status, primary_response.headers, primary_response.body]
   end
