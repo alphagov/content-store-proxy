@@ -32,11 +32,19 @@ GEM
     crass (1.0.6)
     diff-lcs (1.5.0)
     docile (1.4.0)
+    domain_name (0.5.20190701)
+      unf (>= 0.0.5, < 1.0.0)
     erubi (1.12.0)
     faraday (2.7.9)
       faraday-net_http (>= 2.0, < 3.1)
       ruby2_keywords (>= 0.0.4)
     faraday-net_http (3.0.2)
+    gds-api-adapters (88.2.0)
+      addressable
+      link_header
+      null_logger
+      plek (>= 1.9.0)
+      rest-client (~> 2.0)
     google-protobuf (3.23.3)
     googleapis-common-protos-types (1.6.0)
       google-protobuf (~> 3.14)
@@ -53,11 +61,19 @@ GEM
       sentry-ruby (~> 5.3)
       statsd-ruby (~> 1.5)
     hashdiff (1.0.1)
+    http-accept (1.7.0)
+    http-cookie (1.0.5)
+      domain_name (~> 0.5)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     json (2.6.3)
     language_server-protocol (3.17.0.3)
-    logger (1.5.3)
+    link_header (0.0.8)
+    little-plugger (1.1.4)
+    logging (2.3.1)
+      little-plugger (~> 1.1)
+      multi_json (~> 1.14)
+    logstash-event (1.2.02)
     logstasher (2.1.5)
       activesupport (>= 5.2)
       request_store
@@ -65,16 +81,21 @@ GEM
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     method_source (1.0.0)
+    mime-types (3.4.1)
+      mime-types-data (~> 3.2015)
+    mime-types-data (3.2023.0218.1)
     mini_portile2 (2.8.2)
     minitest (5.18.1)
     msgpack (1.7.1)
     multi_json (1.15.0)
     mustermann (3.0.0)
       ruby2_keywords (~> 0.0.1)
+    netrc (0.11.0)
     nio4r (2.5.9)
     nokogiri (1.15.2)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
+    null_logger (0.0.1)
     opentelemetry-api (1.1.0)
     opentelemetry-common (0.19.7)
       opentelemetry-api (~> 1.0)
@@ -277,6 +298,9 @@ GEM
       nio4r (~> 2.0)
     racc (1.7.1)
     rack (2.2.7)
+    rack-logstasher (2.0.0)
+      logstash-event (~> 1.2)
+      rack (>= 2, < 4)
     rack-protection (3.0.6)
       rack
     rack-proxy (0.7.6)
@@ -302,6 +326,11 @@ GEM
     regexp_parser (2.8.1)
     request_store (1.5.1)
       rack (>= 1.4)
+    rest-client (2.1.0)
+      http-accept (>= 1.7.0, < 2.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 4.0)
+      netrc (~> 0.8)
     rexml (3.2.5)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
@@ -378,6 +407,9 @@ GEM
     tilt (2.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.8.2)
     unicode-display_width (2.4.2)
     webmock (3.18.1)
       addressable (>= 2.8.0)
@@ -393,10 +425,12 @@ DEPENDENCIES
   bootsnap
   byebug
   faraday (>= 1.5.1)
+  gds-api-adapters
   govuk_app_config
-  logger
+  logging
   puma
   rack
+  rack-logstasher
   rack-test (>= 1.1.0)
   rake
   rspec (>= 3.10.0)
