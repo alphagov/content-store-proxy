@@ -192,6 +192,36 @@ RSpec.describe RequestForwarder do
     end
   end
 
+  describe ".copy_header?" do
+    context "when given a name starting with HTTP_" do
+      context "and it's not HTTP_HOST" do
+        it "returns true" do
+          expect(described_class.copy_header?("HTTP_HEADER_NAME")).to eq(true)
+        end
+      end
+
+      context "and it is HTTP_HOST" do
+        it "returns false" do
+          expect(described_class.copy_header?("HTTP_HOST")).to eq(false)
+        end
+      end
+    end
+
+    context "when given a name that does not start with HTTP_" do
+      context "and it's not CONTENT_TYPE" do
+        it "returns false" do
+          expect(described_class.copy_header?("HEADER_NAME")).to eq(false)
+        end
+      end
+
+      context "and it is CONTENT_TYPE" do
+        it "returns true" do
+          expect(described_class.copy_header?("CONTENT_TYPE")).to eq(true)
+        end
+      end
+    end
+  end
+
   describe ".headers_from" do
     context "when given a request with Rack-parsed headers" do
       let(:incoming_request) do
@@ -200,18 +230,26 @@ RSpec.describe RequestForwarder do
                           "HTTP_HOST" => "my.host",
                           "HTTP_TRANSFER_ENCODING" => "chunked",
                           "NOT_A_HEADER" => "some other value",
+                          "CONTENT_TYPE" => "application/json",
                         })
       end
 
       let(:returned_value) { described_class.headers_from(incoming_request) }
 
-      it "includes only the env vars where the key starts with HTTP_, and it is not HTTP_HOST" do
-        expect(returned_value.keys.size).to eq(1)
+      context "when copy_header? returns true" do
+        before do
+          allow(described_class).to receive(:copy_header?).and_return(false, true, false, false)
+        end
+
+        it "only includes the env vars where copy_header? returns true" do
+          expect(returned_value.keys.size).to eq(1)
+        end
       end
 
-      it "transforms the keys to capital case and strips off the leading HTTP_" do
+      it "transforms the keys to capital case and strips off any leading HTTP_" do
         expect(returned_value).to eq({
           "Transfer-Encoding" => "chunked",
+          "Content-Type" => "application/json",
         })
       end
     end
