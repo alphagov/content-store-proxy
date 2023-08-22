@@ -69,9 +69,17 @@ class RequestForwarder
     end
   end
 
+  def self.copy_header?(name)
+    # Content-type doesn't come through with a HTTP_ prefix
+    # (see https://github.com/rack/rack/issues/1311)
+    # so we have to explicitly include it
+    name == "CONTENT_TYPE" ||
+      (name.start_with?("HTTP_") && name != "HTTP_HOST")
+  end
+
   def self.headers_from(incoming_request)
-    incoming_request.env.select { |name, _| name.start_with?("HTTP_") && name != "HTTP_HOST" }.map { |header, value|
-      [header[5..].split("_").map(&:capitalize).join("-"), value]
+    incoming_request.env.select { |name, _| copy_header?(name) }.map { |header, value|
+      [header.sub(/^HTTP_/, "").split("_").map(&:capitalize).join("-"), value]
     }.compact.to_h
   end
 end
