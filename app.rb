@@ -2,21 +2,12 @@
 
 require "sinatra/base"
 require "sinatra/multi_route"
-require "sinatra/custom_logger"
-require "logger"
 
 require "./lib/request_forwarder"
 require "./lib/response_comparator"
 
 class ContentStoreProxyApp < Sinatra::Base
   register Sinatra::MultiRoute
-  helpers Sinatra::CustomLogger
-
-  configure :development, :production do
-    logger = Logger.new($stdout)
-    logger.level = Logger::DEBUG # if development?
-    set :logger, logger
-  end
 
   def initialize(primary_upstream: nil, secondary_upstream: nil)
     @primary = primary_upstream || ENV["PRIMARY_UPSTREAM"]
@@ -31,11 +22,22 @@ class ContentStoreProxyApp < Sinatra::Base
     primary_response, secondary_response = RequestForwarder.mirror_to(@primary, @secondary, request)
 
     # log comparison of the two responses
-    comparison = ResponseComparator.compare(primary_response, secondary_response)
-    method = comparison[:first_difference].empty? ? :info : :warn
-    logger.send(method, { path: request.path, stats: comparison }.to_json)
+    log_comparison ResponseComparator.compare(primary_response, secondary_response)
 
     [primary_response.status, primary_response.headers, primary_response.body]
+  end
+
+  def log_comparison(comparison)
+    level = comparison[:first_difference].empty? ? :info : :warn
+    line = {
+      timestamp: Time.now.utc.iso8601,
+      level:,
+      method: env["REQUEST_METHOD"],
+      path: request.path,
+      query_string: env["QUERY_STRING"],
+      stats: comparison,
+    }
+    puts line.to_json
   end
 
   route :get, :put, :patch, :post, :delete, :head, :options, "/*" do
