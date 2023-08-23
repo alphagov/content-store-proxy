@@ -60,7 +60,7 @@ class ContentStoreProxyApp < Sinatra::Base
   end
 
   get "/healthcheck/ready" do
-    GovukHealthcheck.rack_response(Healthcheck::ContentfulCheck).call
+    [200, { "Content-Type" => "text/plain" }, "OK"]
   end
 
   route :get, :put, :patch, :post, :delete, :head, :options, "/*" do
