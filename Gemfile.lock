@@ -57,7 +57,6 @@ GEM
       concurrent-ruby (~> 1.0)
     json (2.6.3)
     language_server-protocol (3.17.0.3)
-    logger (1.5.3)
     logstasher (2.1.5)
       activesupport (>= 5.2)
       request_store
@@ -394,7 +393,6 @@ DEPENDENCIES
   byebug
   faraday (>= 1.5.1)
   govuk_app_config
-  logger
   puma
   rack
   rack-test (>= 1.1.0)
