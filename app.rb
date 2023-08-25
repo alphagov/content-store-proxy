@@ -35,16 +35,29 @@ class ContentStoreProxyApp < Sinatra::Base
   end
 
   def log_comparison(comparison)
-    level = comparison[:first_difference].empty? ? :info : :warn
     line = {
       timestamp: Time.now.utc.iso8601,
-      level:,
+      level: log_level(comparison),
       method: env["REQUEST_METHOD"],
       path: request.path,
       query_string: env["QUERY_STRING"],
       stats: comparison,
     }
     puts line.to_json
+  end
+
+  def log_level(comparison)
+    if (comparison[:different_keys].empty? || comparison[:different_keys] == "N/A") &&
+        matches?(comparison, :status) &&
+        matches?(comparison, :body_size)
+      :info
+    else
+      :warn
+    end
+  end
+
+  def matches?(comparison, field)
+    comparison.dig(:stats, :primary_response, field) == comparison.dig(:stats, :secondary_response, field)
   end
 
   route :get, :put, :patch, :post, :delete, :head, :options, "/*" do
