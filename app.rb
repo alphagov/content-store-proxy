@@ -57,8 +57,7 @@ class ContentStoreProxyApp < Sinatra::Base
   end
 
   def matches?(comparison, field)
-    comparison.fetch(:stats, {}).fetch(:primary_response, {}).fetch(field, nil) ==
-      comparison.fetch(:stats, {}).fetch(:secondary_response, {}).fetch(field, nil)
+    comparison.dig(:stats, :primary_response, field) == comparison.dig(:stats, :secondary_response, field)
   end
 
   route :get, :put, :patch, :post, :delete, :head, :options, "/*" do
