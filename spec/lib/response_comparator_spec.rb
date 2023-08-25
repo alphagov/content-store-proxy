@@ -103,6 +103,39 @@ RSpec.describe ResponseComparator do
       it "returns an array of the keys with different values" do
         expect(described_class.different_keys(string1, string2)).to eq(%w[b c])
       end
+
+      context "when the only difference is in :updated_at" do
+        let(:string1) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:01Z" }.to_json }
+
+        context "and the difference is less than max_updated_at_difference" do
+          let(:string2) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:02Z" }.to_json }
+
+          it "returns an empty array" do
+            expect(described_class.different_keys(string1, string2)).to be_empty
+          end
+        end
+
+        context "and the difference is more than max_updated_at_difference" do
+          let(:string2) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:03Z" }.to_json }
+
+          before do
+            allow(described_class).to receive(:max_updated_at_difference).and_return(1)
+          end
+
+          it "returns an array containing updated_at" do
+            expect(described_class.different_keys(string1, string2)).to eq(%w[updated_at])
+          end
+        end
+      end
+
+      context "when there is a difference in updated_at and another key" do
+        let(:string1) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:01Z" }.to_json }
+        let(:string2) { { a: "a", b: "different b", updated_at: "2023-06-01T08:00:05Z" }.to_json }
+
+        it "returns an array containing updated_at and the other different field" do
+          expect(described_class.different_keys(string1, string2)).to eq(%w[b updated_at])
+        end
+      end
     end
 
     context "when given two strings that are not both JSON" do
@@ -175,6 +208,38 @@ RSpec.describe ResponseComparator do
             expect(return_value[:different_keys]).to eq(different_keys)
           end
         end
+      end
+    end
+  end
+
+  describe ".timestamps_close_enough" do
+    context "when given two strings which are valid iso8601 timestamps" do
+      let(:string1) { "2023-08-24T12:10:26Z" }
+      let(:string2) { "2023-08-24T12:10:28Z" }
+
+      context "and they differ by less than max_diff seconds" do
+        let(:max_diff) { 3 }
+
+        it "returns true" do
+          expect(described_class.timestamps_close_enough(string1, string2, max_diff)).to eq(true)
+        end
+      end
+
+      context "and they differ by more than max_diff seconds" do
+        let(:max_diff) { 1 }
+
+        it "returns false" do
+          expect(described_class.timestamps_close_enough(string1, string2, max_diff)).to eq(false)
+        end
+      end
+    end
+
+    context "when given two strings which are not both valid iso8601 timestamps" do
+      let(:string1) { "2023-08-24T12:10:26Z" }
+      let(:string2) { "2023-08-24 66:88:99" }
+
+      it "returns false" do
+        expect(described_class.timestamps_close_enough(string1, string2, 2)).to eq(false)
       end
     end
   end
