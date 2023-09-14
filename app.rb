@@ -5,6 +5,7 @@ require "sinatra/multi_route"
 
 require "./lib/request_forwarder"
 require "./lib/response_comparator"
+require "./lib/comparison_logger"
 
 class ContentStoreProxyApp < Sinatra::Base
   register Sinatra::MultiRoute

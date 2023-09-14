@@ -10,7 +10,7 @@ class ComparisonLogger
     line = {
       timestamp: Time.now.utc.iso8601,
       level: level,
-      method: @request.method,
+      method: @request.request_method,
       path: @request.path,
       query_string: @request.query_string,
       stats: @comparison,
