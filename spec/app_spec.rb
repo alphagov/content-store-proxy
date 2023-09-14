@@ -6,6 +6,8 @@ require "json"
 require "faraday"
 require "webmock/rspec"
 
+require 'byebug'
+
 require_relative "../app"
 
 RSpec.describe "Forwarding service" do
@@ -23,12 +25,15 @@ RSpec.describe "Forwarding service" do
     ENV["PRIMARY_UPSTREAM"] = "http://localhost:8081"
     ENV["SECONDARY_UPSTREAM"] = "http://localhost:8082"
 
+    byebug
+
     stub_request(:get, primary_url).to_return(status: primary_response_status, body: primary_response_body)
     stub_request(:get, secondary_url).to_return(status: secondary_response_status, body: secondary_response_body)
   end
 
   describe "GET requests" do
     it "forwards the request to the primary upstream service" do
+      byebug
       get "/foo"
 
       expect(last_response.status).to eq(primary_response_status)

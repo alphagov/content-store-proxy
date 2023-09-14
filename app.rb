@@ -22,7 +22,9 @@ class ContentStoreProxyApp < Sinatra::Base
     primary_response, secondary_response = RequestForwarder.mirror_to(@primary, @secondary, request)
 
     # log comparison of the two responses
-    log_comparison ResponseComparator.compare(primary_response, secondary_response)
+    comparison = ResponseComparator.compare(primary_response, secondary_response)
+    ComparisonLogger.new(request:, comparison:).log
+
     [primary_response.status, primary_response.headers, primary_response.body]
   end
 
@@ -32,32 +34,6 @@ class ContentStoreProxyApp < Sinatra::Base
 
   get "/healthcheck/ready" do
     [200, { "Content-Type" => "text/plain" }, "OK"]
-  end
-
-  def log_comparison(comparison)
-    line = {
-      timestamp: Time.now.utc.iso8601,
-      level: log_level(comparison),
-      method: env["REQUEST_METHOD"],
-      path: request.path,
-      query_string: env["QUERY_STRING"],
-      stats: comparison,
-    }
-    puts line.to_json
-  end
-
-  def log_level(comparison)
-    if (comparison[:different_keys].empty? || comparison[:different_keys] == "N/A") &&
-        matches?(comparison, :status) &&
-        matches?(comparison, :body_size)
-      :info
-    else
-      :warn
-    end
-  end
-
-  def matches?(comparison, field)
-    comparison.dig(:stats, :primary_response, field) == comparison.dig(:stats, :secondary_response, field)
   end
 
   route :get, :put, :patch, :post, :delete, :head, :options, "/*" do
