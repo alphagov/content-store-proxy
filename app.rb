@@ -37,6 +37,7 @@ class ContentStoreProxyApp < Sinatra::Base
   def log_comparison(comparison)
     line = {
       timestamp: Time.now.utc.iso8601,
+      govuk_request_id: env["HTTP_GOVUK_REQUEST_ID"],
       level: log_level(comparison),
       method: env["REQUEST_METHOD"],
       path: request.path,
