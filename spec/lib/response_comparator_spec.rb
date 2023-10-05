@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "faraday"
 require "response_comparator"
 
 RSpec.describe ResponseComparator do
@@ -171,6 +172,8 @@ RSpec.describe ResponseComparator do
         before do
           allow(described_class).to receive(:response_stats).with(primary_response).and_return("mock primary response stats")
           allow(described_class).to receive(:response_stats).with(secondary_response).and_return("mock secondary response stats")
+          allow(described_class).to receive(:different_keys).and_return([])
+          allow(described_class).to receive(:first_difference).and_return("N/A")
         end
 
         it "is a Hash" do
@@ -206,6 +209,12 @@ RSpec.describe ResponseComparator do
 
           it "is set to the return value of different_keys" do
             expect(return_value[:different_keys]).to eq(different_keys)
+          end
+        end
+
+        describe "the response_comparison_seconds key" do
+          it "is a non-zero float" do
+            expect(return_value[:comparison_time_seconds]).to be > 0.00
           end
         end
       end

@@ -9,11 +9,13 @@ class ResponseComparator
   MAX_UPDATED_AT_DIFFERENCE = 2
 
   def self.compare(primary_response, secondary_response)
+    start = Time.now
     {
       primary_response: response_stats(primary_response),
       secondary_response: response_stats(secondary_response),
       first_difference: first_difference(primary_response.body, secondary_response.body),
       different_keys: different_keys(primary_response.body, secondary_response.body),
+      comparison_time_seconds: Time.now - start,
     }
   end
 
