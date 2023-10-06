@@ -2,8 +2,11 @@ ARG ruby_version=3.1.2
 ARG base_image=ghcr.io/alphagov/govuk-ruby-base:$ruby_version
 ARG builder_image=ghcr.io/alphagov/govuk-ruby-builder:$ruby_version
 
-
 FROM $builder_image AS builder
+# Need this as govuk_app_config 9.4 requires railties 5.1, which
+# ultimately installs psych 5.1, which needs libyaml-dev
+# Only an issue for this app because it's not Rails. 
+RUN install_packages libyaml-dev
 
 WORKDIR $APP_HOME
 COPY Gemfile* .ruby-version ./
