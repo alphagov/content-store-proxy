@@ -8,14 +8,27 @@ class ResponseComparator
   # complete either side of a second boundary as they run in parallel.
   MAX_UPDATED_AT_DIFFERENCE = 2
 
-  def self.compare(primary_response, secondary_response)
+  def self.compare(primary_response, secondary_response, type = :quick)
     start = Time.now
+    comparison = quick_comparison(primary_response, secondary_response)
+    comparison.merge!(differences(primary_response, secondary_response)) if type == :full
+    comparison[:comparison_time_seconds] = Time.now - start
+    comparison
+  end
+
+  def self.quick_comparison(primary_response, secondary_response)
     {
       primary_response: response_stats(primary_response),
       secondary_response: response_stats(secondary_response),
+      first_difference: "N/A",
+      different_keys: "N/A",
+    }
+  end
+
+  def self.differences(primary_response, secondary_response)
+    {
       first_difference: first_difference(primary_response.body, secondary_response.body),
       different_keys: different_keys(primary_response.body, secondary_response.body),
-      comparison_time_seconds: Time.now - start,
     }
   end
 
