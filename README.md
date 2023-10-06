@@ -7,13 +7,26 @@ It will forward all incoming requests to the given `PRIMARY_UPSTREAM` and `SECON
 > curl http://localhost:4567/api/content/government/ministers
 ...
 
-[2023-05-05T14:37:49.086053 #1430397]  INFO -- : stats: {:primary_response=>{:status=>200, :body_size=>3343568, :time=>0.541455142}, :secondary_response=>{:status=>200, :body_size=>532778, :time=>0.128399933}, :first_difference=>{:position=>187, :context=>["4.000+00:00", "4.000Z\",\"lo"]}}
+{"timestamp":"2023-10-05T12:00:56Z","level":"info","method":"GET","path":"/api/content/government/publications/care-act-statutory-guidance/care-and-support-statutory-guidance","query_string":"","stats":{"primary_response":{"status":200,"body_size":1773132,"time":0.095294816},"secondary_response":{"status":200,"body_size":1773132,"time":0.101621268},"first_difference":"N/A","different_keys":"N/A"}}
 
 ```
 
-In this line, `:context` gives you the 5 characters either side of the first difference detected in the two response bodies. This has always been (so far) a difference in UTC timezone representation between MongoDB and PostgreSQL, but it's there just for info in case anything else comes up.
-
 Any errors on the secondary response are ignored and do not interfere with the primary response.
+
+## Detailed Response Comparison and CPU-load
+
+Note: comparing the responses is CPU-intensive, and so must be used with care on highly-contended environments like production. For a given percentage of requests, a full comparison will be run which will populate the `first_difference` and `different_keys` keys. The percentage is controlled by the environment variable `COMPARISON_SAMPLE_PCT`. The default value for this is `0` - to compare, say, one in ten requests you would supply `COMPARISON_SAMPLE_PCT=10`.
+
+The full comparison looks like this:
+
+```
+{"timestamp":"2023-10-06T09:50:42Z","level":"warn","method":"GET","path":"/content/foreign-travel-advice","query_string":"","stats":{"primary_response":{"status":200,"body_size":327029,"time":0.180271175},"secondary_response":{"status":200,"body_size":327018,"time":0.132149683},"first_difference":{"position":181900,"context":["vice/czech-","vice/gabon\""]},"different_keys":["links","updated_at"]}}
+```
+
+`first_difference` gives the index of the first character which differs between the two responses, and the five characters either side of that position in each response.
+`different_keys` gives the names of all top-level keys in the two JSON structures which have different values.
+
+
 
 # To run
 
