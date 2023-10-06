@@ -4,7 +4,7 @@ Mirroring proxy to enable dual-running of MongoDB &amp; PostgreSQL versions of c
 It will forward all incoming requests to the given `PRIMARY_UPSTREAM` and `SECONDARY_UPSTREAM` URLs in parallel, and return the primary response. Once both upstream responses have been received, it will log a line comparing the two, e.g.
 
 ```
-> curl http://localhost:4567/api/content/government/ministers
+> curl http://localhost:4567/api/content/government/publications/care-act-statutory-guidance/care-and-support-statutory-guidance
 ...
 
 {"timestamp":"2023-10-05T12:00:56Z","level":"info","method":"GET","path":"/api/content/government/publications/care-act-statutory-guidance/care-and-support-statutory-guidance","query_string":"","stats":{"primary_response":{"status":200,"body_size":1773132,"time":0.095294816},"secondary_response":{"status":200,"body_size":1773132,"time":0.101621268},"first_difference":"N/A","different_keys":"N/A"}}
