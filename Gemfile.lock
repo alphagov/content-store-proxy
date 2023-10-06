@@ -45,11 +45,15 @@ GEM
     drb (2.1.1)
       ruby2_keywords
     erubi (1.12.0)
+    ethon (0.16.0)
+      ffi (>= 1.15.0)
     faraday (2.7.11)
       base64
       faraday-net_http (>= 2.0, < 3.1)
       ruby2_keywords (>= 0.0.4)
     faraday-net_http (3.0.2)
+    ffi (1.16.2)
+      google-protobuf (~> 3.18)
     google-protobuf (3.24.4)
     googleapis-common-protos-types (1.9.0)
       google-protobuf (~> 3.18)
@@ -409,6 +413,8 @@ GEM
     stringio (3.0.8)
     thor (1.2.2)
     tilt (2.2.0)
+    typhoeus (1.4.0)
+      ethon (>= 0.9.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.4.2)
@@ -438,6 +444,7 @@ DEPENDENCIES
   simplecov
   sinatra
   sinatra-contrib
+  typhoeus
   webmock (>= 3.14.1)
   webrick
 
