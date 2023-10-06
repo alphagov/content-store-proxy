@@ -9,9 +9,10 @@ require "./lib/response_comparator"
 class ContentStoreProxyApp < Sinatra::Base
   register Sinatra::MultiRoute
 
-  def initialize(primary_upstream: nil, secondary_upstream: nil)
+  def initialize(primary_upstream: nil, secondary_upstream: nil, comparison_sample_pct: nil)
     @primary = primary_upstream || ENV["PRIMARY_UPSTREAM"]
     @secondary = secondary_upstream || ENV["SECONDARY_UPSTREAM"]
+    @comparison_sample_pct = comparison_sample_pct || ENV["COMPARISON_SAMPLE_PCT"].to_i
 
     raise "You must provide both PRIMARY_UPSTREAM and SECONDARY_UPSTREAM URLs" if @primary.nil? || @secondary.nil?
 
@@ -21,8 +22,11 @@ class ContentStoreProxyApp < Sinatra::Base
   def forward_request(request)
     primary_response, secondary_response = RequestForwarder.mirror_to(@primary, @secondary, request)
 
-    # log comparison of the two responses
-    log_comparison ResponseComparator.compare(primary_response, secondary_response)
+    # Log comparison of the two responses, but only the given percentage of them get the full comparison.
+    # This is to prevent the issue seen under full production load, where the CPU usage of the proxy app
+    # maxes out its limit (details: )
+    comparison_type = rand(100) < @comparison_sample_pct ? :quick : :full
+    log_comparison ResponseComparator.compare(primary_response, secondary_response, comparison_type)
     [primary_response.status, primary_response.headers, primary_response.body]
   end
 

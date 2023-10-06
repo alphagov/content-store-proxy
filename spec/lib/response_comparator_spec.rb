@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-require "spec_helper"
 require "faraday"
+
+require "spec_helper"
 require "response_comparator"
 
 RSpec.describe ResponseComparator do
@@ -200,15 +201,67 @@ RSpec.describe ResponseComparator do
           end
         end
 
-        describe "the different_keys key" do
-          let(:different_keys) { %w[key1 key2] }
+        context "when given a type of :quick" do
+          let(:return_value) { described_class.compare(primary_response, secondary_response, :quick) }
 
-          before do
-            allow(described_class).to receive(:different_keys).and_return(different_keys)
+          it "does not call different_keys" do
+            expect(described_class).not_to receive(:different_keys)
+            return_value
           end
 
-          it "is set to the return value of different_keys" do
-            expect(return_value[:different_keys]).to eq(different_keys)
+          describe "the different_keys key" do
+            it "is 'N/A'" do
+              expect(return_value[:different_keys]).to eq("N/A")
+            end
+          end
+
+          it "does not call first_difference" do
+            expect(described_class).not_to receive(:first_difference)
+            return_value
+          end
+
+          describe "the first_difference key" do
+            it "is 'N/A'" do
+              expect(return_value[:first_difference]).to eq("N/A")
+            end
+          end
+        end
+
+        context "when given a type of :full" do
+          let(:return_value) { described_class.compare(primary_response, secondary_response, :full) }
+
+          it "calls different_keys" do
+            expect(described_class).to receive(:different_keys)
+            return_value
+          end
+
+          describe "the different_keys key" do
+            let(:different_keys) { %w[key1 key2] }
+
+            before do
+              allow(described_class).to receive(:different_keys).and_return(different_keys)
+            end
+
+            it "is set to the return value of different_keys" do
+              expect(return_value[:different_keys]).to eq(different_keys)
+            end
+          end
+
+          it "calls first_difference" do
+            expect(described_class).to receive(:first_difference)
+            return_value
+          end
+
+          describe "the first_difference key" do
+            let(:first_difference) { "first diff" }
+
+            before do
+              allow(described_class).to receive(:first_difference).and_return(first_difference)
+            end
+
+            it "is set to the return value of first_difference" do
+              expect(return_value[:first_difference]).to eq(first_difference)
+            end
           end
         end
 
