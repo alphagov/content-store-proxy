@@ -10,6 +10,7 @@ gem "rack"
 gem "rake"
 gem "sinatra"
 gem "sinatra-contrib"
+gem "typhoeus"
 gem "webrick"
 
 group :development, :test do
