@@ -3,7 +3,6 @@
 require "faraday"
 
 require "spec_helper"
-require "faraday"
 require "response_comparator"
 
 RSpec.describe ResponseComparator do

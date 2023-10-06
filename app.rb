@@ -22,8 +22,10 @@ class ContentStoreProxyApp < Sinatra::Base
   def forward_request(request)
     primary_response, secondary_response = RequestForwarder.mirror_to(@primary, @secondary, request)
 
-    # log comparison of the two responses
-    comparison_type = rand(100) <= @comparison_sample_pct ? :quick : :full
+    # Log comparison of the two responses, but only the given percentage of them get the full comparison.
+    # This is to prevent the issue seen under full production load, where the CPU usage of the proxy app
+    # maxes out its limit (details: )
+    comparison_type = rand(100) < @comparison_sample_pct ? :quick : :full
     log_comparison ResponseComparator.compare(primary_response, secondary_response, comparison_type)
     [primary_response.status, primary_response.headers, primary_response.body]
   end
