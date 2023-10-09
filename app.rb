@@ -50,7 +50,7 @@ class ContentStoreProxyApp < Sinatra::Base
   end
 
   def log_level(comparison)
-    if (comparison[:different_keys].empty? || comparison[:different_keys] == "N/A") &&
+    if (comparison[:different_keys].nil? || comparison[:different_keys] == "N/A") &&
         matches?(comparison, :status) &&
         matches?(comparison, :body_size)
       :info

@@ -28,8 +28,6 @@ class ResponseComparator
     {
       primary_response: response_stats(@primary_response),
       secondary_response: response_stats(@secondary_response),
-      first_difference: "N/A",
-      different_keys: "N/A",
     }
   end
 

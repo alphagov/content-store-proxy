@@ -209,14 +209,14 @@ RSpec.describe ResponseComparator do
         let(:full_comparison_pct) { 0 }
 
         describe "the different_keys key" do
-          it "is 'N/A'" do
-            expect(return_value[:different_keys]).to eq("N/A")
+          it "is not present" do
+            expect(return_value.keys).not_to include(:different_keys)
           end
         end
 
         describe "the first_difference key" do
-          it "is 'N/A'" do
-            expect(return_value[:first_difference]).to eq("N/A")
+          it "is not present" do
+            expect(return_value.keys).not_to include(:first_difference)
           end
         end
       end
