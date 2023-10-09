@@ -201,8 +201,10 @@ RSpec.describe ResponseComparator do
           end
         end
 
-        context "when given a type of :quick" do
-          let(:return_value) { described_class.compare(primary_response, secondary_response, :quick) }
+        context "when it's not a full_comparison" do
+          before do
+            allow(described_class).to receive(:full_comparison?).and_return(false)
+          end
 
           it "does not call different_keys" do
             expect(described_class).not_to receive(:different_keys)
@@ -227,8 +229,10 @@ RSpec.describe ResponseComparator do
           end
         end
 
-        context "when given a type of :full" do
-          let(:return_value) { described_class.compare(primary_response, secondary_response, :full) }
+        context "when it is a full_comparison" do
+          before do
+            allow(described_class).to receive(:full_comparison?).and_return(true)
+          end
 
           it "calls different_keys" do
             expect(described_class).to receive(:different_keys)
@@ -271,6 +275,38 @@ RSpec.describe ResponseComparator do
           end
         end
       end
+    end
+  end
+
+  describe ".full_comparison?" do
+    let(:comparison) { {} }
+
+    context "when the random number from 0-99 is less than the given full_pct" do
+      before do
+        allow(described_class).to receive(:rand).with(99).and_return(5)
+      end
+
+      it "returns true" do
+        expect(described_class.full_comparison?(comparison, 10)).to eq(true)
+      end
+    end
+
+    context "when the random number from 0-99 is greater than the given full_pct" do
+      before do
+        allow(described_class).to receive(:rand).with(99).and_return(25)
+      end
+
+      it "returns false" do
+        expect(described_class.full_comparison?(comparison, 10)).to eq(false)
+      end
+    end
+
+    it "adds :r and :sample_percent keys to the given comparison" do
+      allow(described_class).to receive(:rand).with(99).and_return(26)
+      obj = {}
+      described_class.full_comparison?(obj, 10)
+      expect(obj[:r]).to eq(26)
+      expect(obj[:sample_percent]).to eq(10)
     end
   end
 

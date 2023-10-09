@@ -8,10 +8,10 @@ class ResponseComparator
   # complete either side of a second boundary as they run in parallel.
   MAX_UPDATED_AT_DIFFERENCE = 2
 
-  def self.compare(primary_response, secondary_response, type = :quick)
+  def self.compare(primary_response, secondary_response, full_comparison_pct = 0)
     start = Time.now
     comparison = quick_comparison(primary_response, secondary_response)
-    comparison.merge!(differences(primary_response, secondary_response)) if type == :full
+    comparison.merge!(differences(primary_response, secondary_response)) if full_comparison?(comparison, full_comparison_pct)
     comparison[:comparison_time_seconds] = Time.now - start
     comparison
   end
@@ -23,6 +23,13 @@ class ResponseComparator
       first_difference: "N/A",
       different_keys: "N/A",
     }
+  end
+
+  def self.full_comparison?(comparison, full_pct)
+    r = rand(99)
+    full = (full_pct == 100 || r < full_pct)
+    comparison.merge!(sample_percent: full_pct, r:)
+    full
   end
 
   def self.differences(primary_response, secondary_response)
