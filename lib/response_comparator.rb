@@ -8,39 +8,46 @@ class ResponseComparator
   # complete either side of a second boundary as they run in parallel.
   MAX_UPDATED_AT_DIFFERENCE = 2
 
-  def self.compare(primary_response, secondary_response, full_comparison_pct = 0)
+  attr_accessor :primary_response, :secondary_response, :full_comparison_pct
+
+  def initialize(primary_response, secondary_response, full_comparison_pct = 0)
+    @primary_response = primary_response
+    @secondary_response = secondary_response
+    @full_comparison_pct = full_comparison_pct
+  end
+
+  def compare
     start = Time.now
-    comparison = quick_comparison(primary_response, secondary_response)
-    comparison.merge!(differences(primary_response, secondary_response)) if full_comparison?(comparison, full_comparison_pct)
+    comparison = quick_comparison
+    comparison.merge!(differences) if full_comparison?(comparison, full_comparison_pct)
     comparison[:comparison_time_seconds] = Time.now - start
     comparison
   end
 
-  def self.quick_comparison(primary_response, secondary_response)
+  def quick_comparison
     {
-      primary_response: response_stats(primary_response),
-      secondary_response: response_stats(secondary_response),
+      primary_response: response_stats(@primary_response),
+      secondary_response: response_stats(@secondary_response),
       first_difference: "N/A",
       different_keys: "N/A",
     }
   end
 
-  def self.full_comparison?(comparison, full_pct)
-    srand
+  def full_comparison?(comparison, full_pct)
     r = Random.rand(99)
     full = (full_pct == 100 || r < full_pct)
     comparison.merge!(sample_percent: full_pct, r:)
     full
   end
 
-  def self.differences(primary_response, secondary_response)
+  def differences
     {
-      first_difference: first_difference(primary_response.body, secondary_response.body),
-      different_keys: different_keys(primary_response.body, secondary_response.body),
+      first_difference: first_difference(@primary_response.body, @secondary_response.body),
+      different_keys: different_keys(@primary_response.body, @secondary_response.body),
     }
   end
 
-  def self.response_stats(response)
+  def response_stats(response)
     {
       status: response.status,
       body_size: response.body.size,
@@ -48,7 +55,7 @@ class ResponseComparator
     }
   end
 
-  def self.first_difference(string1, string2)
+  def first_difference(string1, string2)
     if string1 == string2
       {}
     else
@@ -57,7 +64,7 @@ class ResponseComparator
     end
   end
 
-  def self.different_keys(json_hash1, json_hash2)
+  def different_keys(json_hash1, json_hash2)
     obj1 = JSON.parse(json_hash1)
     obj2 = JSON.parse(json_hash2)
     (obj1.keys + obj2.keys).uniq.reject do |k|
@@ -68,7 +75,7 @@ class ResponseComparator
     "N/A"
   end
 
-  def self.timestamps_close_enough(str1, str2, max_diff)
+  def timestamps_close_enough(str1, str2, max_diff)
     date1 = Time.iso8601(str1)
     date2 = Time.iso8601(str2)
     (date1 - date2).to_i.abs <= max_diff
@@ -78,7 +85,7 @@ class ResponseComparator
 
   # The constant is wrapped in a method to make it easily stubbable in
   # tests.
-  def self.max_updated_at_difference
+  def max_updated_at_difference
     MAX_UPDATED_AT_DIFFERENCE
   end
 end

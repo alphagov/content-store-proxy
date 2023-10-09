@@ -25,7 +25,7 @@ class ContentStoreProxyApp < Sinatra::Base
     # Log comparison of the two responses, but only the given percentage of them get the full comparison.
     # This is to prevent the issue seen under full production load, where the CPU usage of the proxy app
     # maxes out its limit
-    log_comparison ResponseComparator.compare(primary_response, secondary_response, @comparison_sample_pct)
+    log_comparison ResponseComparator.new(primary_response, secondary_response, @comparison_sample_pct).compare
     [primary_response.status, primary_response.headers, primary_response.body]
   end
 
