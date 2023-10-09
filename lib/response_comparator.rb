@@ -26,7 +26,8 @@ class ResponseComparator
   end
 
   def self.full_comparison?(comparison, full_pct)
-    r = rand(99)
+    srand
+    r = Random.rand(99)
     full = (full_pct == 100 || r < full_pct)
     comparison.merge!(sample_percent: full_pct, r:)
     full

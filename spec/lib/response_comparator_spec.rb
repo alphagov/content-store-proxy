@@ -283,7 +283,7 @@ RSpec.describe ResponseComparator do
 
     context "when the random number from 0-99 is less than the given full_pct" do
       before do
-        allow(described_class).to receive(:rand).with(99).and_return(5)
+        allow(Random).to receive(:rand).with(99).and_return(5)
       end
 
       it "returns true" do
@@ -293,7 +293,7 @@ RSpec.describe ResponseComparator do
 
     context "when the random number from 0-99 is greater than the given full_pct" do
       before do
-        allow(described_class).to receive(:rand).with(99).and_return(25)
+        allow(Random).to receive(:rand).with(99).and_return(25)
       end
 
       it "returns false" do
@@ -302,7 +302,7 @@ RSpec.describe ResponseComparator do
     end
 
     it "adds :r and :sample_percent keys to the given comparison" do
-      allow(described_class).to receive(:rand).with(99).and_return(26)
+      allow(Random).to receive(:rand).with(99).and_return(26)
       obj = {}
       described_class.full_comparison?(obj, 10)
       expect(obj[:r]).to eq(26)
