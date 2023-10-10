@@ -6,6 +6,33 @@ require "spec_helper"
 require "response_comparator"
 
 RSpec.describe ResponseComparator do
+  subject(:comparator) { described_class.new(primary_response, secondary_response, full_comparison_pct) }
+
+  let(:full_comparison_pct) { 0 }
+  let(:primary_response_body) { "primary response body" }
+  let(:secondary_response_body) { "secondary response body" }
+
+  let(:primary_response) do
+    instance_double(Faraday::Response, {
+      body: primary_response_body,
+      status: 200,
+      headers: {
+        "X-Response-Time" => 123.456,
+        "Content-type" => "text/plain",
+      },
+    })
+  end
+  let(:secondary_response) do
+    instance_double(Faraday::Response, {
+      body: secondary_response_body,
+      status: 200,
+      headers: {
+        "X-Response-Time" => 456.789,
+        "Content-type" => "text/plain",
+      },
+    })
+  end
+
   describe ".response_stats" do
     context "when given a response" do
       let(:response) do
@@ -21,7 +48,7 @@ RSpec.describe ResponseComparator do
       end
 
       describe "the returned value" do
-        let(:result) { described_class.response_stats(response) }
+        let(:result) { comparator.response_stats(response) }
 
         it "is a Hash" do
           expect(result).to be_a(Hash)
@@ -45,7 +72,7 @@ RSpec.describe ResponseComparator do
   describe ".first_difference" do
     context "when given two strings" do
       let(:string1) { "a string of length 20" }
-      let(:return_value) { described_class.first_difference(string1, string2) }
+      let(:return_value) { comparator.first_difference(string1, string2) }
 
       context "with the same value" do
         let(:string2) { string1.dup }
@@ -103,7 +130,7 @@ RSpec.describe ResponseComparator do
       let(:string2) { { a: "a", b: "different b", c: ["c1", "different c2"] }.to_json }
 
       it "returns an array of the keys with different values" do
-        expect(described_class.different_keys(string1, string2)).to eq(%w[b c])
+        expect(comparator.different_keys(string1, string2)).to eq(%w[b c])
       end
 
       context "when the only difference is in :updated_at" do
@@ -113,19 +140,15 @@ RSpec.describe ResponseComparator do
           let(:string2) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:02Z" }.to_json }
 
           it "returns an empty array" do
-            expect(described_class.different_keys(string1, string2)).to be_empty
+            expect(comparator.different_keys(string1, string2)).to be_empty
           end
         end
 
         context "and the difference is more than max_updated_at_difference" do
-          let(:string2) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:03Z" }.to_json }
-
-          before do
-            allow(described_class).to receive(:max_updated_at_difference).and_return(1)
-          end
+          let(:string2) { { a: "a", b: "b", updated_at: "2023-06-01T08:00:11Z" }.to_json }
 
           it "returns an array containing updated_at" do
-            expect(described_class.different_keys(string1, string2)).to eq(%w[updated_at])
+            expect(comparator.different_keys(string1, string2)).to eq(%w[updated_at])
           end
         end
       end
@@ -135,7 +158,7 @@ RSpec.describe ResponseComparator do
         let(:string2) { { a: "a", b: "different b", updated_at: "2023-06-01T08:00:05Z" }.to_json }
 
         it "returns an array containing updated_at and the other different field" do
-          expect(described_class.different_keys(string1, string2)).to eq(%w[b updated_at])
+          expect(comparator.different_keys(string1, string2)).to eq(%w[b updated_at])
         end
       end
     end
@@ -145,132 +168,129 @@ RSpec.describe ResponseComparator do
       let(:string2) { "not json either" }
 
       it "does not error" do
-        expect { described_class.different_keys(string1, string2) }.not_to raise_error
+        expect { comparator.different_keys(string1, string2) }.not_to raise_error
       end
 
       it "returns N/A" do
-        expect(described_class.different_keys(string1, string2)).to eq("N/A")
+        expect(comparator.different_keys(string1, string2)).to eq("N/A")
       end
     end
   end
 
   describe ".compare" do
-    context "when given a primary_response and a secondary_response" do
-      let(:primary_response) do
-        instance_double(Faraday::Response, {
-          body: "primary response body",
-        })
-      end
-      let(:secondary_response) do
-        instance_double(Faraday::Response, {
-          body: "secondary response body",
-        })
+    describe "the return value" do
+      let(:return_value) { comparator.compare }
+
+      it "is a Hash" do
+        expect(return_value).to be_a(Hash)
       end
 
-      describe "the return value" do
-        let(:return_value) { described_class.compare(primary_response, secondary_response) }
+      it "has a primary_response key" do
+        expect(return_value.keys).to include(:primary_response)
+      end
 
-        before do
-          allow(described_class).to receive(:response_stats).with(primary_response).and_return("mock primary response stats")
-          allow(described_class).to receive(:response_stats).with(secondary_response).and_return("mock secondary response stats")
-          allow(described_class).to receive(:different_keys).and_return([])
-          allow(described_class).to receive(:first_difference).and_return("N/A")
+      describe "the primary_response key" do
+        let(:primary_response_key) { return_value[:primary_response] }
+
+        it "is set to the response_stats for the primary_response" do
+          expect(primary_response_key).to eq({ body_size: 21, status: 200, time: 123.456 })
         end
+      end
 
-        it "is a Hash" do
-          expect(return_value).to be_a(Hash)
+      describe "the secondary_response key" do
+        let(:secondary_response_key) { return_value[:secondary_response] }
+
+        it "is set to the response_stats for the secondary_response" do
+          expect(secondary_response_key).to eq({ body_size: 23, status: 200, time: 456.789 })
         end
+      end
 
-        it "has a primary_response key" do
-          expect(return_value.keys).to include(:primary_response)
-        end
+      context "when it's not a full_comparison" do
+        let(:full_comparison_pct) { 0 }
 
-        describe "the primary_response key" do
-          let(:primary_response_key) { return_value[:primary_response] }
-
-          it "is set to the response_stats for the primary_response" do
-            expect(primary_response_key).to eq("mock primary response stats")
-          end
-        end
-
-        describe "the secondary_response key" do
-          let(:secondary_response_key) { return_value[:secondary_response] }
-
-          it "is set to the response_stats for the secondary_response" do
-            expect(secondary_response_key).to eq("mock secondary response stats")
+        describe "the different_keys key" do
+          it "is not present" do
+            expect(return_value.keys).not_to include(:different_keys)
           end
         end
 
-        context "when given a type of :quick" do
-          let(:return_value) { described_class.compare(primary_response, secondary_response, :quick) }
-
-          it "does not call different_keys" do
-            expect(described_class).not_to receive(:different_keys)
-            return_value
-          end
-
-          describe "the different_keys key" do
-            it "is 'N/A'" do
-              expect(return_value[:different_keys]).to eq("N/A")
-            end
-          end
-
-          it "does not call first_difference" do
-            expect(described_class).not_to receive(:first_difference)
-            return_value
-          end
-
-          describe "the first_difference key" do
-            it "is 'N/A'" do
-              expect(return_value[:first_difference]).to eq("N/A")
-            end
-          end
-        end
-
-        context "when given a type of :full" do
-          let(:return_value) { described_class.compare(primary_response, secondary_response, :full) }
-
-          it "calls different_keys" do
-            expect(described_class).to receive(:different_keys)
-            return_value
-          end
-
-          describe "the different_keys key" do
-            let(:different_keys) { %w[key1 key2] }
-
-            before do
-              allow(described_class).to receive(:different_keys).and_return(different_keys)
-            end
-
-            it "is set to the return value of different_keys" do
-              expect(return_value[:different_keys]).to eq(different_keys)
-            end
-          end
-
-          it "calls first_difference" do
-            expect(described_class).to receive(:first_difference)
-            return_value
-          end
-
-          describe "the first_difference key" do
-            let(:first_difference) { "first diff" }
-
-            before do
-              allow(described_class).to receive(:first_difference).and_return(first_difference)
-            end
-
-            it "is set to the return value of first_difference" do
-              expect(return_value[:first_difference]).to eq(first_difference)
-            end
-          end
-        end
-
-        describe "the response_comparison_seconds key" do
-          it "is a non-zero float" do
-            expect(return_value[:comparison_time_seconds]).to be > 0.00
+        describe "the first_difference key" do
+          it "is not present" do
+            expect(return_value.keys).not_to include(:first_difference)
           end
         end
       end
+
+      context "when it is a full_comparison" do
+        let(:full_comparison_pct) { 100 }
+
+        let(:primary_response_body) { { a: "a", b: "b", c: "c" }.to_json }
+        let(:secondary_response_body) { { a: "a", b: "b", z: "z" }.to_json }
+
+        describe "the different_keys key" do
+          it "is set to the names of keys which differ" do
+            expect(return_value[:different_keys]).to eq(%w[c z])
+          end
+        end
+
+        describe "the first_difference key" do
+          let(:first_difference) { "first diff" }
+
+          it "is a Hash" do
+            expect(return_value[:first_difference]).to be_a(Hash)
+          end
+
+          describe "position key" do
+            it "is set to the index of the first difference" do
+              expect(return_value[:first_difference][:position]).to eq(18)
+            end
+          end
+
+          describe "context key" do
+            it "has 5 characters each side of the position" do
+              expect(return_value[:first_difference][:context]).to eq(["\"b\",\"c\":\"c\"", "\"b\",\"z\":\"z\""])
+            end
+          end
+        end
+      end
+
+      describe "the response_comparison_seconds key" do
+        it "is a non-zero float" do
+          expect(return_value[:comparison_time_seconds]).to be > 0.00
+        end
+      end
+    end
+  end
+
+  describe ".full_comparison?" do
+    let(:comparison) { {} }
+
+    context "when the random number from 0-99 is less than the given full_pct" do
+      before do
+        allow(Random).to receive(:rand).with(100).and_return(5)
+      end
+
+      it "returns true" do
+        expect(comparator.full_comparison?(comparison, 10)).to eq(true)
+      end
+    end
+
+    context "when the random number from 0-99 is greater than the given full_pct" do
+      before do
+        allow(Random).to receive(:rand).with(100).and_return(25)
+      end
+
+      it "returns false" do
+        expect(comparator.full_comparison?(comparison, 10)).to eq(false)
+      end
+    end
+
+    it "adds :r and :sample_percent keys to the given comparison" do
+      allow(Random).to receive(:rand).with(100).and_return(26)
+      obj = {}
+      comparator.full_comparison?(obj, 10)
+      expect(obj[:r]).to eq(26)
+      expect(obj[:sample_percent]).to eq(10)
     end
   end
 
@@ -283,7 +303,7 @@ RSpec.describe ResponseComparator do
         let(:max_diff) { 3 }
 
         it "returns true" do
-          expect(described_class.timestamps_close_enough(string1, string2, max_diff)).to eq(true)
+          expect(comparator.timestamps_close_enough(string1, string2, max_diff)).to eq(true)
         end
       end
 
@@ -291,7 +311,7 @@ RSpec.describe ResponseComparator do
         let(:max_diff) { 1 }
 
         it "returns false" do
-          expect(described_class.timestamps_close_enough(string1, string2, max_diff)).to eq(false)
+          expect(comparator.timestamps_close_enough(string1, string2, max_diff)).to eq(false)
         end
       end
     end
@@ -301,7 +321,7 @@ RSpec.describe ResponseComparator do
       let(:string2) { "2023-08-24 66:88:99" }
 
       it "returns false" do
-        expect(described_class.timestamps_close_enough(string1, string2, 2)).to eq(false)
+        expect(comparator.timestamps_close_enough(string1, string2, 2)).to eq(false)
       end
     end
   end
