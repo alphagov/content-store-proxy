@@ -5,6 +5,7 @@ require "sinatra/multi_route"
 
 require "./lib/request_forwarder"
 require "./lib/response_comparator"
+require "./lib/comparison_logger"
 
 class ContentStoreProxyApp < Sinatra::Base
   register Sinatra::MultiRoute
@@ -25,7 +26,8 @@ class ContentStoreProxyApp < Sinatra::Base
     # Log comparison of the two responses, but only the given percentage of them get the full comparison.
     # This is to prevent the issue seen under full production load, where the CPU usage of the proxy app
     # maxes out its limit
-    log_comparison ResponseComparator.new(primary_response, secondary_response, @comparison_sample_pct).compare
+    comparison = ResponseComparator.new(primary_response, secondary_response, @comparison_sample_pct).compare
+    ComparisonLogger.log(comparison, request)
     [primary_response.status, primary_response.headers, primary_response.body]
   end
 
@@ -35,32 +37,6 @@ class ContentStoreProxyApp < Sinatra::Base
 
   get "/healthcheck/ready" do
     [200, { "Content-Type" => "text/plain" }, "OK"]
-  end
-
-  def log_comparison(comparison)
-    line = {
-      timestamp: Time.now.utc.iso8601,
-      level: log_level(comparison),
-      method: env["REQUEST_METHOD"],
-      path: request.path,
-      query_string: env["QUERY_STRING"],
-      stats: comparison,
-    }
-    puts line.to_json
-  end
-
-  def log_level(comparison)
-    if (comparison[:different_keys].nil? || comparison[:different_keys] == "N/A") &&
-        matches?(comparison, :status) &&
-        matches?(comparison, :body_size)
-      :info
-    else
-      :warn
-    end
-  end
-
-  def matches?(comparison, field)
-    comparison.dig(:stats, :primary_response, field) == comparison.dig(:stats, :secondary_response, field)
   end
 
   route :get, :put, :patch, :post, :delete, :head, :options, "/*" do
