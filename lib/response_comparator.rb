@@ -32,10 +32,9 @@ class ResponseComparator
   end
 
   def full_comparison?(comparison, full_pct)
-    r = Random.rand(99)
-    full = (full_pct == 100 || r < full_pct)
+    r = Random.rand(100)
     comparison.merge!(sample_percent: full_pct, r:)
-    full
+    (r < full_pct)
   end
 
   def differences
