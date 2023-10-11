@@ -122,7 +122,7 @@ RSpec.describe ResponseComparator do
         end
 
         context "and the difference is after the end of string1" do
-          let(:string2) { string1 + "!" }
+          let(:string2) { "#{string1}!" }
 
           describe "the return value" do
             it "has :position set to the position of the first difference" do
@@ -136,7 +136,7 @@ RSpec.describe ResponseComparator do
         end
 
         context "and the difference is after the end of string2" do
-          let(:string1) { string2 + "!" }
+          let(:string1) { "#{string2}!" }
 
           describe "the return value" do
             it "has :position set to the position of the first difference" do

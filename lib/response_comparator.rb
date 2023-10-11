@@ -57,11 +57,11 @@ class ResponseComparator
     # at the start of string2
     # Almost 1000 times faster for long strings (>250k characters)
     # on local testing when compared to naive iterate-and-compare-each-char
-    i = (0..string1.length).bsearch { |i| string2.rindex(string1[0..i]) != 0 }
+    i = (0..string1.length).bsearch { |n| string2.rindex(string1[0..n]) != 0 }
 
     # Just need to handle the edge case where string2 is string1 + some stuff on the end
-    if i.nil?
-      i = string1.length if string2.length > string1.length
+    if i.nil? && (string2.length > string1.length)
+      i = string1.length
     end
 
     i.nil? ? {} : { position: i, context: [string1[i - 5..i + 5], string2[i - 5..i + 5]] }
