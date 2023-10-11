@@ -71,7 +71,7 @@ RSpec.describe ResponseComparator do
 
   describe ".first_difference" do
     context "when given two strings" do
-      let(:string1) { "a string of length 20" }
+      let(:string1) { "a string of length 21" }
       let(:return_value) { comparator.first_difference(string1, string2) }
 
       context "with the same value" do
@@ -92,7 +92,7 @@ RSpec.describe ResponseComparator do
         end
 
         context "and the difference is more than 5 characters from the start and more than 5 characters from the end" do
-          let(:string2) { "a string!of length 20" }
+          let(:string2) { "a string!of length 21" }
 
           describe "the return value" do
             it "has :context set to the 5 characters either side of the first difference, from each string" do
@@ -102,21 +102,49 @@ RSpec.describe ResponseComparator do
         end
 
         context "and the difference is more than 5 characters from the start and less than 5 characters from the end" do
-          let(:string2) { "a string of length!20" }
+          let(:string2) { "a string of length!21" }
 
           describe "the return value" do
             it "has :context set to the 5 characters before the first difference, and only up to the end of each string" do
-              expect(return_value[:context]).to eq(["ength 20", "ength!20"])
+              expect(return_value[:context]).to eq(["ength 21", "ength!21"])
             end
           end
         end
 
         context "and the difference is less than 5 characters from the start and more than 5 characters from the end" do
-          let(:string2) { "a string of length!20" }
+          let(:string2) { "a string of length!21" }
 
           describe "the return value" do
             it "has :context set to the available characters before the first difference, and the 5 characters after each string" do
-              expect(return_value[:context]).to eq(["ength 20", "ength!20"])
+              expect(return_value[:context]).to eq(["ength 21", "ength!21"])
+            end
+          end
+        end
+
+        context "and the difference is after the end of string1" do
+          let(:string2) { string1 + "!" }
+
+          describe "the return value" do
+            it "has :position set to the position of the first difference" do
+              expect(return_value[:position]).to eq(21)
+            end
+
+            it "has :context set to the 5 characters either side of the first difference, from each string" do
+              expect(return_value[:context]).to eq(["th 21", "th 21!"])
+            end
+          end
+        end
+
+        context "and the difference is after the end of string2" do
+          let(:string1) { string2 + "!" }
+
+          describe "the return value" do
+            it "has :position set to the position of the first difference" do
+              expect(return_value[:position]).to eq(18)
+            end
+
+            it "has :context set to the 5 characters either side of the first difference, from each string" do
+              expect(return_value[:context]).to eq(["tring!", "tring"])
             end
           end
         end
