@@ -53,12 +53,18 @@ class ResponseComparator
   end
 
   def first_difference(string1, string2)
-    if string1 == string2
-      {}
-    else
-      i = (0...string1.size).find { |j| string1[j] != string2[j] } || string1.size
-      { position: i, context: [string1[i - 5..i + 5], string2[i - 5..i + 5]] }
+    # Binary search to find the first index where the slice of string1 is not
+    # at the start of string2
+    # Almost 1000 times faster for long strings (>250k characters)
+    # on local testing when compared to naive iterate-and-compare-each-char
+    i = (0..string1.length).bsearch { |n| string2.rindex(string1[0..n]) != 0 }
+
+    # Just need to handle the edge case where string2 is string1 + some stuff on the end
+    if i.nil? && (string2.length > string1.length)
+      i = string1.length
     end
+
+    i.nil? ? {} : { position: i, context: [string1[i - 5..i + 5], string2[i - 5..i + 5]] }
   end
 
   def different_keys(json_hash1, json_hash2)
