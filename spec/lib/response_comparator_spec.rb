@@ -353,4 +353,40 @@ RSpec.describe ResponseComparator do
       end
     end
   end
+
+  describe ".integers_close_enough" do
+    context "when given two valid integers" do
+      let(:int1) { 123 }
+      let(:int2) { 125 }
+
+      context "and they differ by less than max_diff seconds" do
+        let(:max_diff) { 3 }
+
+        it "returns true" do
+          expect(comparator.integers_close_enough(int1, int2, max_diff)).to eq(true)
+        end
+      end
+
+      context "and they differ by more than max_diff seconds" do
+        let(:max_diff) { 1 }
+
+        it "returns false" do
+          expect(comparator.integers_close_enough(int1, int2, max_diff)).to eq(false)
+        end
+      end
+    end
+
+    context "when given two values which are not both valid integers" do
+      let(:int1) { nil }
+      let(:int2) { "a lizard" }
+
+      it "does not raise an error" do
+        expect { comparator.integers_close_enough(int1, int2, 2) }.not_to raise_error
+      end
+
+      it "returns false" do
+        expect(comparator.integers_close_enough(int1, int2, 2)).to eq(false)
+      end
+    end
+  end
 end

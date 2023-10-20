@@ -2,11 +2,13 @@
 
 class ResponseComparator
   # The maximum difference in seconds between two updated_at timestamps
+  # or two scheduled_publishing_delay_seconds values (which are
+  # calculated "on arrival" by the ContentItem.create_or_update)
   # for the proxy to consider them "close enough to not warn about".
   # A small difference is acceptable as these timestamps are generated
   # automatically by the ORM layer on write, and the two requests often
   # complete either side of a second boundary as they run in parallel.
-  MAX_UPDATED_AT_DIFFERENCE = 2
+  MAX_TIME_DIFFERENCE = 2
 
   attr_accessor :primary_response, :secondary_response, :full_comparison_pct
 
@@ -72,10 +74,17 @@ class ResponseComparator
     obj2 = JSON.parse(json_hash2)
     (obj1.keys + obj2.keys).uniq.reject do |k|
       obj1[k] == obj2[k] ||
-        (k == "updated_at" && timestamps_close_enough(obj1[k], obj2[k], max_updated_at_difference))
+        (k == "updated_at" && timestamps_close_enough(obj1[k], obj2[k], max_time_difference)) ||
+        (k == "scheduled_publishing_delay_seconds" && integers_close_enough(obj1[k], obj2[k], max_time_difference))
     end
   rescue JSON::ParserError
     "N/A"
+  end
+
+  def integers_close_enough(int1, int2, max_diff)
+    (int1 - int2).to_i.abs <= max_diff
+  rescue ArgumentError, NoMethodError
+    false
   end
 
   def timestamps_close_enough(str1, str2, max_diff)
@@ -88,7 +97,7 @@ class ResponseComparator
 
   # The constant is wrapped in a method to make it easily stubbable in
   # tests.
-  def max_updated_at_difference
-    MAX_UPDATED_AT_DIFFERENCE
+  def max_time_difference
+    MAX_TIME_DIFFERENCE
   end
 end
