@@ -47,11 +47,13 @@ class ResponseComparator
   end
 
   def response_stats(response)
-    {
+    stats = {
       status: response.status,
       body_size: response.body.size,
       time: response.headers["X-Response-Time"].to_f,
     }
+    stats.merge!(location: response.headers["Location"]) if response.status == 303
+    stats
   end
 
   def first_difference(string1, string2)

@@ -10,6 +10,8 @@ RSpec.describe ComparisonLogger do
   let(:secondary_response_body_size) { 22_222 }
   let(:different_keys) { nil }
   let(:first_difference) { nil }
+  let(:primary_response_location) { nil }
+  let(:secondary_response_location) { nil }
 
   let(:comparison) do
     {
@@ -17,11 +19,13 @@ RSpec.describe ComparisonLogger do
         status: primary_response_status,
         body_size: primary_response_body_size,
         time: 0.001045556,
+        location: primary_response_location,
       },
       secondary_response: {
         status: secondary_response_status,
         body_size: secondary_response_body_size,
         time: 0.000890302,
+        location: secondary_response_location,
       },
       different_keys:,
       first_difference:,
@@ -95,8 +99,33 @@ RSpec.describe ComparisonLogger do
         let(:primary_response_body_size) { 12_345 }
         let(:secondary_response_body_size) { 23_456 }
 
-        it "returns :warn" do
-          expect(result).to eq(:warn)
+        context "when the statuses are both 303" do
+          let(:primary_response_status) { 303 }
+          let(:secondary_response_status) { 303 }
+
+          context "when the locations have the same path" do
+            let(:primary_response_location) { "http://content-store-mongo-main/api/content/some-path" }
+            let(:secondary_response_location) { "http://content-store-postgresql-branch/api/content/some-path" }
+
+            it "returns :info" do
+              expect(result).to eq(:info)
+            end
+          end
+
+          context "when the locations do not have the same path" do
+            let(:primary_response_location) { "http://content-store-mongo-main/api/content/some-path" }
+            let(:secondary_response_location) { "http://content-store-mongo-main/api/content/some-other-path" }
+
+            it "returns :warn" do
+              expect(result).to eq(:warn)
+            end
+          end
+        end
+
+        context "when the statuses are not both 303" do
+          it "returns :warn" do
+            expect(result).to eq(:warn)
+          end
         end
       end
     end
