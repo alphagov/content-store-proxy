@@ -19,16 +19,25 @@ class ComparisonLogger
   end
 
   def self.log_level(comparison)
+    level = :warn
     if (comparison[:different_keys].nil? || comparison[:different_keys] == [] || comparison[:different_keys] == "N/A") &&
-        matches?(comparison, :status) &&
-        matches?(comparison, :body_size)
-      :info
-    else
-      :warn
+        matches?(comparison, :status)
+      if comparison.dig(:primary_response, :status) == 303 && location_paths_match?(comparison)
+        level = :info
+      elsif matches?(comparison, :body_size)
+        level = :info
+      end
     end
+    level
   end
 
   def self.matches?(comparison, field)
     comparison.dig(:primary_response, field) == comparison.dig(:secondary_response, field)
+  end
+
+  def self.location_paths_match?(comparison)
+    primary_location = comparison.dig(:primary_response, :location).to_s.sub(/http:\/\/[^\/]+/, "")
+    secondary_location = comparison.dig(:secondary_response, :location).to_s.sub(/http:\/\/[^\/]+/, "")
+    primary_location == secondary_location
   end
 end
