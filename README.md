@@ -13,6 +13,13 @@ It will forward all incoming requests to the given `PRIMARY_UPSTREAM` and `SECON
 
 Any errors on the secondary response are ignored and do not interfere with the primary response.
 
+## Secondary response timeouts
+
+As the secondary response is never served to the user, but the proxy has to wait for both responses to complete before it can compare them, it's possible that a very slow secondary upstream can still lead to downstream ill-effects. 
+
+So a timeout can be set on the secondary response only, using the environment variable `SECONDARY_TIMEOUT_SECONDS=(float or integer)`.  If the secondary response takes longer than this many seconds,
+it will be ignored, and logged as `"secondary_response": null`, with a log level of `"info"`. 
+
 ## Detailed Response Comparison and CPU-load
 
 Note: comparing the responses is CPU-intensive, and so must be used with care on highly-contended environments like production. For a given percentage of requests, a full comparison will be run which will populate the `first_difference` and `different_keys` keys. The percentage is controlled by the environment variable `COMPARISON_SAMPLE_PCT`. The default value for this is `0` - to compare, say, one in ten requests you would supply `COMPARISON_SAMPLE_PCT=10`.

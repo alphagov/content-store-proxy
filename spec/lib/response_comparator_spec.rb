@@ -231,6 +231,14 @@ RSpec.describe ResponseComparator do
         it "is set to the response_stats for the secondary_response" do
           expect(secondary_response_key).to eq({ body_size: 23, status: 200, time: 456.789 })
         end
+
+        context "when the secondary_response is nil" do
+          let(:secondary_response) { nil }
+
+          it "is nil" do
+            expect(secondary_response_key).to be_nil
+          end
+        end
       end
 
       context "when it's not a full_comparison" do
@@ -277,6 +285,22 @@ RSpec.describe ResponseComparator do
           describe "context key" do
             it "has 5 characters each side of the position" do
               expect(return_value[:first_difference][:context]).to eq(["\"b\",\"c\":\"c\"", "\"b\",\"z\":\"z\""])
+            end
+          end
+        end
+
+        context "but the secondary_response is nil" do
+          let(:secondary_response) { nil }
+
+          describe "the different_keys key" do
+            it "is not present" do
+              expect(return_value.keys).not_to include(:different_keys)
+            end
+          end
+
+          describe "the first_difference key" do
+            it "is not present" do
+              expect(return_value.keys).not_to include(:first_difference)
             end
           end
         end
