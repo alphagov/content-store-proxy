@@ -21,7 +21,7 @@ class ResponseComparator
   def compare
     start = Time.now
     comparison = quick_comparison
-    comparison.merge!(differences) if full_comparison?(comparison, full_comparison_pct)
+    comparison.merge!(differences) if @secondary_response && full_comparison?(comparison, full_comparison_pct)
     comparison[:comparison_time_seconds] = Time.now - start
     comparison
   end
@@ -29,7 +29,7 @@ class ResponseComparator
   def quick_comparison
     {
       primary_response: response_stats(@primary_response),
-      secondary_response: response_stats(@secondary_response),
+      secondary_response: @secondary_response ? response_stats(@secondary_response) : nil,
     }
   end
 

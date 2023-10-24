@@ -4,6 +4,8 @@ require "spec_helper"
 require "request_forwarder"
 
 RSpec.describe RequestForwarder do
+  let(:timeout) { nil }
+
   describe "forward_to" do
     let(:mock_connection) { instance_double(Faraday::Connection) }
     let(:mock_request) { instance_double(Rack::Request) }
@@ -14,7 +16,7 @@ RSpec.describe RequestForwarder do
     before do
       allow(described_class).to receive(:new_connection).with("given url").and_return(mock_connection)
       allow(described_class).to receive(:send_to).with(mock_connection, mock_request,
-                                                       mock_payload).and_return(mock_response)
+                                                       mock_payload, timeout:).and_return(mock_response)
       allow(mock_response).to receive(:body=)
     end
 
@@ -25,7 +27,7 @@ RSpec.describe RequestForwarder do
 
     it "sends the request to the new connection with the given payload" do
       expect(described_class).to receive(:send_to).with(mock_connection, mock_request,
-                                                        "payload")
+                                                        "payload", timeout:)
       described_class.forward_to("given url", mock_request, "payload")
     end
 
@@ -88,7 +90,7 @@ RSpec.describe RequestForwarder do
       allow(described_class).to receive(:forward_to).with(primary_upstream, mock_request,
                                                           "payload").and_return(primary_response)
       allow(described_class).to receive(:forward_to).with(secondary_upstream, mock_request,
-                                                          "payload").and_return(secondary_response)
+                                                          "payload", timeout:).and_return(secondary_response)
     end
 
     it "extracts the payload as a string" do
@@ -106,6 +108,29 @@ RSpec.describe RequestForwarder do
       expect(described_class).to receive(:forward_to).with(secondary_upstream, mock_request,
                                                            "payload")
       described_class.mirror_to(secondary_upstream, secondary_upstream, mock_request)
+    end
+
+    context "when given a secondary_timeout" do
+      let(:timeout) { 0.5 }
+
+      context "when the secondary response takes longer than the timeout" do
+        before do
+          allow(described_class).to receive(:forward_to).with(secondary_upstream, mock_request,
+                                                              "payload", timeout:).and_raise(Faraday::TimeoutError)
+        end
+
+        it "does not raise a Faraday::TimeoutError" do
+          expect {
+            described_class.mirror_to(primary_upstream, secondary_upstream,
+                                      mock_request, secondary_timeout: timeout)
+          }.not_to raise_error
+        end
+
+        it "returns an array of the primary response, and nil for the secondary_response" do
+          expect(described_class.mirror_to(primary_upstream, secondary_upstream,
+                                           mock_request, secondary_timeout: timeout)).to eq([primary_response, nil])
+        end
+      end
     end
 
     it "returns an array of the primary & secondary responses" do
@@ -166,9 +191,12 @@ RSpec.describe RequestForwarder do
     end
 
     describe "the outgoing request" do
-      let(:outgoing_request) { Faraday::Request.new }
+      let(:mock_options) { instance_double(Faraday::RequestOptions) }
+      let(:outgoing_request) { instance_double(Faraday::Request, options: mock_options) }
 
       before do
+        allow(outgoing_request).to receive(:headers=)
+        allow(outgoing_request).to receive(:body=)
         allow(mock_connection).to receive(given_verb).and_yield(outgoing_request)
         allow(described_class).to receive(:set_content_headers)
         allow(described_class).to receive(:headers_from).and_return({ "incoming header" => "value" })
@@ -188,6 +216,24 @@ RSpec.describe RequestForwarder do
       it "copies the body from the incoming request" do
         expect(outgoing_request).to receive(:body=).with("payload")
         described_class.send_to(mock_connection, mock_request, "payload")
+      end
+
+      context "when given a timeout" do
+        let(:timeout) { 5 }
+
+        it "has the given timeout value" do
+          expect(outgoing_request.options).to receive(:timeout=).with(5)
+          described_class.send_to(mock_connection, mock_request, "payload", timeout:)
+        end
+      end
+
+      context "when not given a timeout" do
+        let(:timeout) { nil }
+
+        it "has no timeout value" do
+          expect(outgoing_request.options).not_to receive(:timeout=)
+          described_class.send_to(mock_connection, mock_request, "payload", timeout:)
+        end
       end
     end
   end

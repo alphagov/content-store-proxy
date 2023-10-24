@@ -3,14 +3,18 @@
 require "faraday"
 
 class RequestForwarder
-  def self.mirror_to(primary_upstream, secondary_upstream, incoming_request)
+  def self.mirror_to(primary_upstream, secondary_upstream, incoming_request, secondary_timeout: nil)
     # we always send a full body - if we're given a stream,
     # that's more complex to deal with, so let's just read it into a String
     payload = payload_as_string(incoming_request.body)
     # forward to primary upstream
     primary_thread = Thread.new { forward_to(primary_upstream, incoming_request, payload) }
     # forward to secondary upstream
-    secondary_thread = Thread.new { forward_to(secondary_upstream, incoming_request, payload) }
+    secondary_thread = Thread.new do
+      forward_to(secondary_upstream, incoming_request, payload, timeout: secondary_timeout)
+    rescue Faraday::TimeoutError
+      nil
+    end
 
     primary_thread.join
     secondary_thread.join
@@ -19,9 +23,9 @@ class RequestForwarder
     [primary_response, secondary_response]
   end
 
-  def self.forward_to(upstream, incoming_request, payload)
+  def self.forward_to(upstream, incoming_request, payload, timeout: nil)
     start_time = Time.now
-    response = send_to(new_connection(upstream), incoming_request, payload)
+    response = send_to(new_connection(upstream), incoming_request, payload, timeout:)
 
     response.headers["X-Response-Time"] = (Time.now - start_time).to_s
     set_content_headers(response)
@@ -59,11 +63,12 @@ class RequestForwarder
     end
   end
 
-  def self.send_to(connection, incoming_request, payload)
+  def self.send_to(connection, incoming_request, payload, timeout: nil)
     connection.send(incoming_request.request_method.downcase,
                     path_with_query_string_if_given(incoming_request)) do |req|
       req.headers = headers_from(incoming_request)
       req.body = payload.dup
+      req.options.timeout = timeout if timeout
 
       set_content_headers(req)
     end
