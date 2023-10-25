@@ -12,8 +12,9 @@ class RequestForwarder
     # forward to secondary upstream
     secondary_thread = Thread.new do
       forward_to(secondary_upstream, incoming_request, payload, timeout: secondary_timeout)
-    rescue Faraday::TimeoutError
-      nil
+    # ...handle timeout errors on the secondary gracefully
+    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
+      e
     end
 
     primary_thread.join
