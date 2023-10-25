@@ -21,15 +21,35 @@ class ResponseComparator
   def compare
     start = Time.now
     comparison = quick_comparison
-    comparison.merge!(differences) if @secondary_response && full_comparison?(comparison, full_comparison_pct)
+    comparison.merge!(differences) if secondary_response_completed_ok? && full_comparison?(comparison, full_comparison_pct)
     comparison[:comparison_time_seconds] = Time.now - start
     comparison
   end
 
   def quick_comparison
+    secondary = if secondary_response_completed_ok?
+                  response_stats(@secondary_response)
+                else
+                  error_fields(@secondary_response)
+                end
+
     {
       primary_response: response_stats(@primary_response),
-      secondary_response: @secondary_response ? response_stats(@secondary_response) : nil,
+      secondary_response: secondary,
+    }
+  end
+
+  def secondary_response_completed_ok?
+    !@secondary_response.class.ancestors.include?(StandardError)
+  end
+
+  def error_fields(exception)
+    {
+      error: {
+        message: exception.message,
+        location: exception.backtrace.to_a.first,
+        type: exception.class.name,
+      },
     }
   end
 

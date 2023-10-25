@@ -205,6 +205,32 @@ RSpec.describe ResponseComparator do
     end
   end
 
+  describe ".secondary_response_completed_ok?" do
+    context "when the secondary_response is a Faraday::ConnectionFailed" do
+      let(:secondary_response) { Faraday::ConnectionFailed.new }
+
+      it "is false" do
+        expect(comparator.secondary_response_completed_ok?).to eq(false)
+      end
+    end
+
+    context "when the secondary_response is a Faraday::TimeoutError" do
+      let(:secondary_response) { Faraday::TimeoutError.new }
+
+      it "is false" do
+        expect(comparator.secondary_response_completed_ok?).to eq(false)
+      end
+    end
+
+    context "when the secondary_response is a Faraday::Response" do
+      let(:secondary_response) { Faraday::Response }
+
+      it "is true" do
+        expect(comparator.secondary_response_completed_ok?).to eq(true)
+      end
+    end
+  end
+
   describe ".compare" do
     describe "the return value" do
       let(:return_value) { comparator.compare }
@@ -232,11 +258,25 @@ RSpec.describe ResponseComparator do
           expect(secondary_response_key).to eq({ body_size: 23, status: 200, time: 456.789 })
         end
 
-        context "when the secondary_response is nil" do
-          let(:secondary_response) { nil }
+        context "when the secondary_response is an error" do
+          let(:secondary_response) do
+            Faraday::ConnectionFailed.new("test exception")
+          end
 
-          it "is nil" do
-            expect(secondary_response_key).to be_nil
+          it "has an error key" do
+            expect(secondary_response_key.key?(:error)).to eq(true)
+          end
+
+          describe "the error key" do
+            let(:error_key) { secondary_response_key[:error] }
+
+            it "has the error message" do
+              expect(error_key[:message]).to eq("test exception")
+            end
+
+            it "has the error type" do
+              expect(error_key[:type]).to eq(secondary_response.class.name)
+            end
           end
         end
       end
@@ -289,8 +329,8 @@ RSpec.describe ResponseComparator do
           end
         end
 
-        context "but the secondary_response is nil" do
-          let(:secondary_response) { nil }
+        context "but the secondary_response is an exception" do
+          let(:secondary_response) { Faraday::TimeoutError.new }
 
           describe "the different_keys key" do
             it "is not present" do

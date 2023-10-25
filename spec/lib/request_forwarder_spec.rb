@@ -119,16 +119,75 @@ RSpec.describe RequestForwarder do
                                                               "payload", timeout:).and_raise(Faraday::TimeoutError)
         end
 
-        it "does not raise a Faraday::TimeoutError" do
+        it "does not raise an error" do
           expect {
             described_class.mirror_to(primary_upstream, secondary_upstream,
                                       mock_request, secondary_timeout: timeout)
           }.not_to raise_error
         end
 
-        it "returns an array of the primary response, and nil for the secondary_response" do
-          expect(described_class.mirror_to(primary_upstream, secondary_upstream,
-                                           mock_request, secondary_timeout: timeout)).to eq([primary_response, nil])
+        describe "the returned value" do
+          let(:returned_value) do
+            described_class.mirror_to(
+              primary_upstream,
+              secondary_upstream,
+              mock_request,
+              secondary_timeout: timeout,
+            )
+          end
+
+          it "is an array" do
+            expect(returned_value).to be_a(Array)
+          end
+
+          it "has primary_response as the first element" do
+            expect(returned_value.first).to eq(primary_response)
+          end
+
+          describe "the second element" do
+            it "is the error" do
+              expect(returned_value.last).to be_a(Faraday::TimeoutError)
+            end
+          end
+        end
+      end
+    end
+
+    context "when the secondary request cannot connect" do
+      before do
+        allow(described_class).to receive(:forward_to).with(secondary_upstream, mock_request,
+                                                            "payload", timeout:).and_raise(Faraday::ConnectionFailed)
+      end
+
+      it "does not raise an error" do
+        expect {
+          described_class.mirror_to(primary_upstream, secondary_upstream,
+                                    mock_request, secondary_timeout: timeout)
+        }.not_to raise_error
+      end
+
+      describe "the returned value" do
+        let(:returned_value) do
+          described_class.mirror_to(
+            primary_upstream,
+            secondary_upstream,
+            mock_request,
+            secondary_timeout: timeout,
+          )
+        end
+
+        it "is an array" do
+          expect(returned_value).to be_a(Array)
+        end
+
+        it "has primary_response as the first element" do
+          expect(returned_value.first).to eq(primary_response)
+        end
+
+        describe "the second element" do
+          it "is the error" do
+            expect(returned_value.last).to be_a(Faraday::ConnectionFailed)
+          end
         end
       end
     end
