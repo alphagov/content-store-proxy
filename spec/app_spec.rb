@@ -65,6 +65,27 @@ RSpec.describe "Forwarding service" do
       end
     end
 
+    context "when an error is thrown in comparing the responses" do
+      let(:mock_comparator) { instance_double(ResponseComparator) }
+
+      before do
+        allow(ResponseComparator).to receive(:new).and_return(mock_comparator)
+        allow(mock_comparator).to receive(:compare).and_raise(TypeError, "This exception should be caught by the app")
+      end
+
+      it "does not allow the error to bubble out" do
+        expect {
+          get "/foo"
+        }.not_to raise_error
+      end
+
+      it "still returns the primary status and body" do
+        get "/foo"
+        expect(last_response.status).to eq(primary_response_status)
+        expect(last_response.body).to eq(primary_response_body)
+      end
+    end
+
     context "when the request has headers" do
       let(:headers) { { "HTTP_X_ARBITRARY_HEADER" => "X-A-H header value", "HTTP_ACCEPT" => "application/json" } }
 
