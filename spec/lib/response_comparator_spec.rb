@@ -440,9 +440,35 @@ RSpec.describe ResponseComparator do
       end
     end
 
-    context "when given two values which are not both valid integers" do
+    context "when given two values which are both not valid integers" do
       let(:int1) { nil }
       let(:int2) { "a lizard" }
+
+      it "does not raise an error" do
+        expect { comparator.integers_close_enough(int1, int2, 2) }.not_to raise_error
+      end
+
+      it "returns false" do
+        expect(comparator.integers_close_enough(int1, int2, 2)).to eq(false)
+      end
+    end
+
+    context "when the first value is nil but the second is a valid integer" do
+      let(:int1) { nil }
+      let(:int2) { 0 }
+
+      it "does not raise an error" do
+        expect { comparator.integers_close_enough(int1, int2, 2) }.not_to raise_error
+      end
+
+      it "returns false" do
+        expect(comparator.integers_close_enough(int1, int2, 2)).to eq(false)
+      end
+    end
+
+    context "when the second value is nil but the first is a valid integer" do
+      let(:int2) { nil }
+      let(:int1) { 0 }
 
       it "does not raise an error" do
         expect { comparator.integers_close_enough(int1, int2, 2) }.not_to raise_error
