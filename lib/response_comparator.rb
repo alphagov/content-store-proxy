@@ -104,7 +104,7 @@ class ResponseComparator
   end
 
   def integers_close_enough(int1, int2, max_diff)
-    (int1 - int2).to_i.abs <= max_diff
+    int1.is_a?(Integer) && int2.is_a?(Integer) && (int1 - int2).to_i.abs <= max_diff
   rescue ArgumentError, NoMethodError
     false
   end
